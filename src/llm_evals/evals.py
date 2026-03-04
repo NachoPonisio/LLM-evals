@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import uuid
+from tkinter.constants import NUMERIC
 
 import dotenv
 from langchain_community.docstore.document import Document
@@ -288,6 +289,29 @@ def main():
                            "langfuse_user_id": user_id,
                        }
                    ))
+                current_trace = langfuse_client.get_current_trace_id()
+                print("-*" * 20)
+                user_score: int = 0
+                try:
+                    user_score = int(input(f"> How would you rate the relevance of my responses for trace_id {current_trace} (0-10)?: ").strip())
+                except Exception as e:
+                    print("Unable to capture score")
+
+                user_comments: str = ""
+                try:
+                    user_comments = input("> Would you like to add any comments?: ").strip()
+                except Exception as e:
+                    print("Unable to capture comments")
+                print("-*" * 20)
+
+
+                langfuse_client.score_current_trace(
+                    name="relevance",
+                    value=user_score/10,
+                    data_type="NUMERIC",
+                    comment=user_comments
+                )
+
                 print(f"System: {goodbye_message.content}")
                 break
 
@@ -305,15 +329,14 @@ def main():
                                    ))
 
             response = review_chain.invoke({"user_id": user_id, "user_input": user_input, "conversation": conversation},
-                                           config=RunnableConfig(
-                                               run_name="final-response",
-                                               callbacks=[langfuse_handler],
-                                               metadata={
-                                                   "langfuse_session_id": session_name,
-                                                   "langfuse_user_id": user_id,
-                                               }
-                                           )
-                                           )
+                               config=RunnableConfig(
+                                   run_name="final-response",
+                                   callbacks=[langfuse_handler],
+                                   metadata={
+                                       "langfuse_session_id": session_name,
+                                       "langfuse_user_id": user_id,
+                                   }
+                               ))
 
             print(f"System: {response.content}")
             conversation.append(response)
