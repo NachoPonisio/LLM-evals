@@ -1,4 +1,6 @@
-# Instructions
+# Task 1
+
+## Instructions
 
 This project uses **Poetry** and **uv** for dependency management. Follow the steps below to set up and run the application.
 
